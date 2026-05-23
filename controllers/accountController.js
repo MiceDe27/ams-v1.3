@@ -40,12 +40,19 @@ exports.createAccount = async (req, res) =>{
     try{
         const Account = req.tenantDb.model('Account', AccountSchema);
         
-        if (req.body.password) req.body.password = encryptData(req.body.password);
-        if (req.body.name) req.body.name = encryptData(req.body.name);
-        if (req.body.email) req.body.email = encryptData(req.body.email);
-        if (req.body.website) req.body.website = encryptData(req.body.website);
+        const accountData = { ...req.body };
+        
+        if (accountData.name && accountData.name.trim() !== "") accountData.name = encryptData(accountData.name);
+        if (accountData.email && accountData.email.trim() !== "") accountData.email = encryptData(accountData.email);
+        if (accountData.password && accountData.password.trim() !== "") accountData.password = encryptData(accountData.password);
+        
+        if (accountData.website && accountData.website.trim() !== "") {
+            accountData.website = encryptData(accountData.website);
+        } else {
+            delete accountData.website;
+        }
 
-        const newAccount = new Account(req.body);
+        const newAccount = new Account(accountData);
         const savedAccount = await newAccount.save();
 
         const responseData = savedAccount.toObject();
@@ -56,6 +63,7 @@ exports.createAccount = async (req, res) =>{
 
         res.status(201).json(responseData);
     } catch (err){
+        console.error("❌ MONGOOSE ACCOUNTS CORE SAVE FAIL:", err.message);
         res.status(400).json({message: err.message});
     }
 };
