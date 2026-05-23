@@ -1,0 +1,13 @@
+.env
+node_modules/
+config/firebase-service-key.json
+dist/
+
+logs/
+npm-debug.log*
+yanrn-debug.log*
+yarn-error.log*
+
+.vscode/
+.DS_Store
+Thumbs.db
