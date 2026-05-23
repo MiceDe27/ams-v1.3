@@ -63,7 +63,7 @@ exports.createAccount = async (req, res) =>{
 
         res.status(201).json(responseData);
     } catch (err){
-        console.error("❌ MONGOOSE ACCOUNTS CORE SAVE FAIL:", err.message);
+        console.error("MONGOOSE ACCOUNTS CORE SAVE FAIL:", err.message);
         res.status(400).json({message: err.message});
     }
 };
