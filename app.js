@@ -28,15 +28,11 @@ if (process.env.FRONTEND_URL) {
 
 app.use((req, res, next) => {
     const origin = req.headers.origin;
-    const allowedOrigins = [
-        'http://localhost:5173',
-        'https://localhost',
-        'capacitor://localhost',
-        'http://localhost'
-    ];
 
-    if (allowedOrigins.includes(origin) || !origin) {
+    if (!origin || origin.includes('localhost') || origin.startsWith('capacitor://')) {
         res.setHeader('Access-Control-Allow-Origin', origin || '*');
+    } else {
+        res.setHeader('Access-Control-Allow-Origin', origin);
     }
     
     res.setHeader('Access-Control-Allow-Credentials', 'true');
