@@ -39,17 +39,32 @@ const generateUniqueFilename = (originalName) => {
 exports.createAccount = async (req, res) =>{
     try{
         const Account = req.tenantDb.model('Account', AccountSchema);
-        
-        const accountData = { ...req.body };
-        
-        if (accountData.name && accountData.name.trim() !== "") accountData.name = encryptData(accountData.name);
-        if (accountData.email && accountData.email.trim() !== "") accountData.email = encryptData(accountData.email);
-        if (accountData.password && accountData.password.trim() !== "") accountData.password = encryptData(accountData.password);
-        
-        if (accountData.website && accountData.website.trim() !== "") {
-            accountData.website = encryptData(accountData.website);
-        } else {
-            delete accountData.website;
+        const idempotencyKey = req.headers['x-idempotency-key'] || crypto.randomBytes(16).toString('hex');
+
+        if (idempotencyKey) {
+            const existingAccount = await Account.findOne({ idempotencyKey });
+
+            if (existingAccount) {
+                const responseData = existingAccount.toObject();
+                responseData.name = decryptData(responseData.name);
+                responseData.email = decryptData(responseData.email);
+                responseData.website = decryptData(responseData.website);
+                responseData.password = decryptData(responseData.password); 
+                return res.status(200).json(responseData);
+            }
+        }
+
+        const accountData = {
+            idempotencyKey,
+            name: req.body.name ? encryptData(req.body.name) : undefined,
+            email: req.body.email ? encryptData(req.body.email) : undefined,
+            password: req.body.password ? encryptData(req.body.password) : undefined
+        };
+
+        if(idempotencyKey) accountData.idempotencyKey = idempotencyKey;
+
+        if (req.body.website && req.body.website.trim() !== "") {
+            accountData.website = encryptData(req.body.website);
         }
 
         const newAccount = new Account(accountData);
@@ -63,7 +78,6 @@ exports.createAccount = async (req, res) =>{
 
         res.status(201).json(responseData);
     } catch (err){
-        console.error("MONGOOSE ACCOUNTS CORE SAVE FAIL:", err.message);
         res.status(400).json({message: err.message});
     }
 };
